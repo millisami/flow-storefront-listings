@@ -1,91 +1,107 @@
-import Image from 'next/image'
-import { Inter } from '@next/font/google'
-import styles from './page.module.css'
+"use client";
+import "../flow/config"
+import * as fcl from "@onflow/fcl"
+import { useEffect, useState } from "react"
+import Link from "next/link";
 
-const inter = Inter({ subsets: ['latin'] })
+// Events are identified using a specific syntax defined by Flow
+// A.{contractAddress}.{contractName}.{eventName}
+// 
+// The following two constants are the event identifiers (event keys as Flow calls them)
+// for the `ListingAvailable` and `ListingCompleted` events
+// for NFTStorefront V1 on Flow Mainnet
+const ListingAvailableEventKey =
+  "A.4eb8a10cb9f87357.NFTStorefront.ListingAvailable";
+const ListingCompletedEventKey =
+  "A.4eb8a10cb9f87357.NFTStorefront.ListingCompleted";
 
 export default function Home() {
+  const [availableEvents, setAvailableEvents] = useState([])
+  const [completedEvents, setCompletedEvents] = useState([])
+
+  // when the page is first loaded, subscribe/listen for new events
+  useEffect(() => {
+    // Listen for ListingAvailable events
+    // Add new events on top, and old events in bottom
+    fcl.events(ListingAvailableEventKey).subscribe(events => {
+      setAvailableEvents(oldEvents => [events, ...oldEvents])
+    })
+
+    // Listen of completed events
+    fcl.events(ListingCompletedEventKey).subscribe(events => {
+      setCompletedEvents(oldEvents => [events, ...oldEvents])
+    })
+  
+  }, [])
+  
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+    <>
+      <p>This is a sample project done at <a href="https://learnweb3.io/" _target="blank" rel="noreferrer">LearnWeb3</a> that shows and refreshes the Listings every 2 seconds, based upon 
+        general purpose <a href="https://github.com/onflow/nft-storefront" _target="blank" rel="noreferrer">Cadence NFT Storefront Contract</a> for trading NFTs on <a href="https://flow.com/" target="_blank" rel="noreferrer">Flow</a> blockchain.
+      </p>
+    <div className="grid">
+      <div>
+        <h3>Available Listing</h3>
+        {availableEvents.length === 0 
+          ? <p>No Listings Available</p>
+          : availableEvents.map((ae, idx) => (
+            <div key={idx}>
+              <p>
+                Storefront: {ae.storefrontAddress}<br/>
+                Listing Resource ID: {ae.listingResourceID}<br/>
+                NFT Type ID: {ae.nftType.typeID}<br/>
+                NFT ID: {ae.nftID}<br/>
+                Token Type: {ae.ftVaultType.typeID}<br/>
+                Price: {ae.price}
+              </p>
+              <hr/>
+            </div>
+          ))
+        }
       </div>
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
-        </div>
+      <div>
+        <h3>Completed Listing</h3>
+        {completedEvents.length === 0
+          ? <p>No Completed Listings Available</p>
+          : completedEvents.map((ce, idx) => (
+            <div key={idx}>
+              <p>
+                Storefront Resource ID: {ce.storefrontResourceID}<br/>
+                Listing Resource ID: {ce.listingResourceID}<br/>
+                NFT Type ID: {ce.nftType.typeID}<br/>
+                NFT ID: {ce.nftID}
+              </p>
+              <hr/>
+            </div>
+          ))
+        }
       </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
+    </>
   )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // <Image
+  //   className={styles.logo}
+  //   src="/next.svg"
+  //   alt="Next.js Logo"
+  //   width={180}
+  //   height={37}
+  //   priority
+  // />
+
 }
